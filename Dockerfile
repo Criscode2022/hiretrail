@@ -17,13 +17,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 ENV HOST=0.0.0.0
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 COPY apps/api/package.json apps/api/
 COPY apps/web/package.json apps/web/
-RUN npm install --workspaces --include-workspace-root --omit=dev \
-  && npm install better-sqlite3 --workspace=apps/api
+RUN npm install --workspaces --include-workspace-root --omit=dev
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY --from=build /app/apps/web/dist apps/web/dist
 RUN mkdir -p /app/data
