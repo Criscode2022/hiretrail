@@ -1,0 +1,199 @@
+<div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Dashboard</h1>
+    <p class="page-sub">
+      Hello {{ firstName() }} — here is your pipeline pulse.
+    </p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <a routerLink="/app/applications/new" class="btn-primary">New application</a>
+    <a routerLink="/app/pipeline" class="btn-secondary">Open pipeline</a>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <div class="card h-28 animate-pulse bg-elevated/50"></div>
+    }
+  </div>
+} @else if (error()) {
+  <div class="card border-danger/30 p-6 text-danger">{{ error() }}</div>
+} @else {
+  @if (data(); as d) {
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="card p-5">
+        <div class="text-xs font-medium uppercase tracking-wide text-subtle">Active</div>
+        <div class="stat-value mt-2">{{ d.totals.active }}</div>
+        <div class="mt-1 text-xs text-muted">of {{ d.totals.applications }} total apps</div>
+      </div>
+      <div class="card p-5">
+        <div class="text-xs font-medium uppercase tracking-wide text-subtle">Interviews</div>
+        <div class="stat-value mt-2">{{ d.totals.upcomingInterviews }}</div>
+        <div class="mt-1 text-xs text-muted">
+          upcoming this week · {{ d.totals.interviews }} total
+        </div>
+      </div>
+      <div class="card p-5">
+        <div class="text-xs font-medium uppercase tracking-wide text-subtle">Avg target salary</div>
+        <div class="stat-value mt-2">
+          {{ d.totals.avgSalary != null ? (d.totals.avgSalary | number) : '—' }}
+        </div>
+        <div class="mt-1 text-xs text-muted">midpoint across roles (EUR)</div>
+      </div>
+      <div class="card p-5">
+        <div class="text-xs font-medium uppercase tracking-wide text-subtle">Network</div>
+        <div class="stat-value mt-2">{{ d.totals.companies }}</div>
+        <div class="mt-1 text-xs text-muted">{{ d.totals.contacts }} contacts tracked</div>
+      </div>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-3">
+      <div class="card p-5 lg:col-span-2">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold">Funnel</h2>
+          <div class="flex gap-3 text-xs text-muted">
+            <span>Apply {{ d.conversion.applyRate }}%</span>
+            <span>Interview {{ d.conversion.interviewRate }}%</span>
+            <span>Offer {{ d.conversion.offerRate }}%</span>
+          </div>
+        </div>
+        <div class="space-y-3">
+          @for (row of statusEntries(d.byStatus); track row.status) {
+            <div>
+              <div class="mb-1 flex justify-between text-xs">
+                <span class="text-muted">{{ row.label }}</span>
+                <span class="font-mono tabular-nums text-fg">{{ row.count }}</span>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full bg-elevated">
+                <div
+                  class="h-full rounded-full bg-accent/80 transition-all"
+                  [style.width]="barWidth(row.count, d.totals.applications)"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="card p-5">
+        <h2 class="mb-4 text-sm font-semibold">Upcoming interviews</h2>
+        @if (d.upcomingInterviews.length === 0) {
+          <p class="text-sm text-muted">No interviews in the next 7 days.</p>
+        } @else {
+          <ul class="space-y-3">
+            @for (i of d.upcomingInterviews; track i.id) {
+              <li class="rounded-xl border border-line bg-bg/40 p-3">
+                <div class="text-sm font-medium">
+                  {{ i.application?.title ?? 'Interview' }}
+                </div>
+                <div class="mt-0.5 text-xs text-muted">
+                  {{ i.application?.company?.name }} · {{ i.type }}
+                </div>
+                <div class="mt-1 font-mono text-xs text-subtle">
+                  {{ formatDateTime(i.scheduledAt) }} · {{ relativeTime(i.scheduledAt) }}
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-2">
+      <div class="card p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold">Follow-ups due</h2>
+          <a routerLink="/app/applications" class="text-xs text-muted hover:text-fg">View all</a>
+        </div>
+        @if (d.followUps.length === 0) {
+          <p class="text-sm text-muted">You are caught up.</p>
+        } @else {
+          <ul class="divide-y divide-line">
+            @for (a of d.followUps; track a.id) {
+              <li class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <a [routerLink]="['/app/applications', a.id]" class="min-w-0 hover:text-accent">
+                  <div class="truncate text-sm font-medium">{{ a.title }}</div>
+                  <div class="truncate text-xs text-muted">{{ a.company?.name }}</div>
+                </a>
+                <span class="shrink-0 font-mono text-xs text-warn">
+                  {{ relativeTime(a.followUpAt) }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      <div class="card p-5">
+        <div class="mb-4 flex items-center justify-between">
+          <h2 class="text-sm font-semibold">Stale applications</h2>
+          <span class="text-xs text-subtle">No update in 14+ days</span>
+        </div>
+        @if (d.stale.length === 0) {
+          <p class="text-sm text-muted">Pipeline looks fresh.</p>
+        } @else {
+          <ul class="divide-y divide-line">
+            @for (a of d.stale; track a.id) {
+              <li class="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+                <a [routerLink]="['/app/applications', a.id]" class="min-w-0 hover:text-accent">
+                  <div class="truncate text-sm font-medium">{{ a.title }}</div>
+                  <div class="truncate text-xs text-muted">
+                    {{ a.company?.name }} · {{ statusLabels[a.status] }}
+                  </div>
+                </a>
+                <span class="shrink-0 font-mono text-xs text-subtle">
+                  {{ relativeTime(a.updatedAt) }}
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+
+    <div class="card mt-6 p-5">
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-sm font-semibold">Recent activity</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[640px] text-left text-sm">
+          <thead>
+            <tr class="border-b border-line text-xs uppercase tracking-wide text-subtle">
+              <th class="pb-3 pr-4 font-medium">Role</th>
+              <th class="pb-3 pr-4 font-medium">Company</th>
+              <th class="pb-3 pr-4 font-medium">Status</th>
+              <th class="pb-3 pr-4 font-medium">Comp</th>
+              <th class="pb-3 font-medium">Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of d.recent; track a.id) {
+              <tr class="border-b border-line/60 last:border-0">
+                <td class="py-3 pr-4">
+                  <a
+                    [routerLink]="['/app/applications', a.id]"
+                    class="font-medium hover:text-accent"
+                    >{{ a.title }}</a
+                  >
+                </td>
+                <td class="py-3 pr-4 text-muted">{{ a.company?.name }}</td>
+                <td class="py-3 pr-4">
+                  <span class="badge border-line bg-elevated text-muted">{{
+                    statusLabels[a.status]
+                  }}</span>
+                </td>
+                <td class="py-3 pr-4 font-mono text-xs text-muted">
+                  {{ formatMoney(a.salaryMin, a.salaryMax, a.currency) }}
+                </td>
+                <td class="py-3 font-mono text-xs text-subtle">
+                  {{ relativeTime(a.updatedAt) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}

@@ -1,0 +1,105 @@
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Applications</h1>
+    <p class="page-sub">Search, filter, and manage every role.</p>
+  </div>
+  <a routerLink="/app/applications/new" class="btn-primary">New application</a>
+</div>
+
+<div class="card mb-4 p-4">
+  <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+    <input
+      type="search"
+      class="field lg:max-w-sm"
+      placeholder="Search title, company, location…"
+      [formControl]="q"
+    />
+    <div class="flex flex-wrap gap-2">
+      <button
+        type="button"
+        class="badge border-line px-3 py-1.5"
+        [class.bg-accent]="statusFilter() === ''"
+        [class.text-ink]="statusFilter() === ''"
+        [class.bg-elevated]="statusFilter() !== ''"
+        [class.text-muted]="statusFilter() !== ''"
+        (click)="setStatus('')"
+      >
+        All
+      </button>
+      @for (s of statuses; track s) {
+        <button
+          type="button"
+          class="badge border-line px-3 py-1.5"
+          [class.bg-accent]="statusFilter() === s"
+          [class.text-ink]="statusFilter() === s"
+          [class.bg-elevated]="statusFilter() !== s"
+          [class.text-muted]="statusFilter() !== s"
+          (click)="setStatus(s)"
+        >
+          {{ statusLabels[s] }}
+        </button>
+      }
+    </div>
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="card h-48 animate-pulse bg-elevated/30"></div>
+} @else if (items().length === 0) {
+  <div class="card p-10 text-center">
+    <p class="text-sm text-muted">No applications match your filters.</p>
+    <a routerLink="/app/applications/new" class="btn-primary mt-4">Add your first role</a>
+  </div>
+} @else {
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[760px] text-left text-sm">
+        <thead>
+          <tr class="border-b border-line bg-elevated/40 text-xs uppercase tracking-wide text-subtle">
+            <th class="px-4 py-3 font-medium">Role</th>
+            <th class="px-4 py-3 font-medium">Company</th>
+            <th class="px-4 py-3 font-medium">Status</th>
+            <th class="px-4 py-3 font-medium">Priority</th>
+            <th class="px-4 py-3 font-medium">Comp</th>
+            <th class="px-4 py-3 font-medium">Updated</th>
+            <th class="px-4 py-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (a of items(); track a.id) {
+            <tr class="border-b border-line/70 last:border-0 hover:bg-elevated/20">
+              <td class="px-4 py-3">
+                <a
+                  [routerLink]="['/app/applications', a.id]"
+                  class="font-medium hover:text-accent"
+                  >{{ a.title }}</a
+                >
+                <div class="text-xs text-subtle">
+                  {{ a.remote ? 'Remote' : a.location || '—' }}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-muted">{{ a.company?.name }}</td>
+              <td class="px-4 py-3">
+                <span class="badge border-line bg-elevated text-muted">{{
+                  statusLabels[a.status]
+                }}</span>
+              </td>
+              <td class="px-4 py-3 text-xs text-subtle">{{ a.priority }}</td>
+              <td class="px-4 py-3 font-mono text-xs text-muted">
+                {{ formatMoney(a.salaryMin, a.salaryMax, a.currency) }}
+              </td>
+              <td class="px-4 py-3 font-mono text-xs text-subtle">
+                {{ relativeTime(a.updatedAt) }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <button type="button" class="btn-ghost px-2 py-1 text-xs text-danger" (click)="remove(a.id)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

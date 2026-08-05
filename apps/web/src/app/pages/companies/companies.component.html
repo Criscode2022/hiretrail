@@ -1,0 +1,76 @@
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Companies</h1>
+    <p class="page-sub">Organizations you are targeting or already talking to.</p>
+  </div>
+  <button type="button" class="btn-primary" (click)="showForm.set(!showForm())">
+    {{ showForm() ? 'Close' : 'Add company' }}
+  </button>
+</div>
+
+@if (showForm()) {
+  <form class="card mb-6 grid max-w-2xl gap-4 p-5 sm:grid-cols-2" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="sm:col-span-2">
+      <label class="label">Name</label>
+      <input class="field" formControlName="name" />
+    </div>
+    <div>
+      <label class="label">Website</label>
+      <input class="field" formControlName="website" />
+    </div>
+    <div>
+      <label class="label">Industry</label>
+      <input class="field" formControlName="industry" />
+    </div>
+    <div>
+      <label class="label">Location</label>
+      <input class="field" formControlName="location" />
+    </div>
+    <div class="sm:col-span-2">
+      <label class="label">Notes</label>
+      <textarea class="field" rows="3" formControlName="notes"></textarea>
+    </div>
+    <div class="sm:col-span-2">
+      <button type="submit" class="btn-primary">Save company</button>
+    </div>
+  </form>
+}
+
+@if (loading()) {
+  <div class="card h-40 animate-pulse bg-elevated/30"></div>
+} @else if (items().length === 0) {
+  <div class="card p-10 text-center text-sm text-muted">No companies yet.</div>
+} @else {
+  <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    @for (c of items(); track c.id) {
+      <article class="card p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-sm font-semibold">{{ c.name }}</h2>
+            <p class="mt-1 text-xs text-muted">
+              {{ c.industry || 'Industry n/a' }}
+              @if (c.location) {
+                · {{ c.location }}
+              }
+            </p>
+          </div>
+          <button type="button" class="btn-ghost px-2 py-1 text-xs text-danger" (click)="remove(c.id)">
+            Delete
+          </button>
+        </div>
+        @if (c.website) {
+          <a
+            [href]="c.website"
+            target="_blank"
+            rel="noopener"
+            class="mt-3 inline-block text-xs text-muted underline-offset-4 hover:text-fg hover:underline"
+            >{{ c.website }}</a
+          >
+        }
+        @if (c.notes) {
+          <p class="mt-3 line-clamp-3 text-sm text-muted">{{ c.notes }}</p>
+        }
+      </article>
+    }
+  </div>
+}

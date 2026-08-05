@@ -1,0 +1,75 @@
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Pipeline</h1>
+    <p class="page-sub">Kanban view of every role in flight.</p>
+  </div>
+  <a routerLink="/app/applications/new" class="btn-primary">Add role</a>
+</div>
+
+@if (loading()) {
+  <div class="flex gap-4 overflow-x-auto pb-4">
+    @for (i of [1, 2, 3, 4]; track i) {
+      <div class="h-72 w-72 shrink-0 animate-pulse rounded-2xl bg-elevated/40"></div>
+    }
+  </div>
+} @else {
+  <div class="flex gap-4 overflow-x-auto pb-6">
+    @for (col of pipeline(); track col.status) {
+      <section class="flex w-72 shrink-0 flex-col rounded-2xl border border-line bg-surface/60">
+        <header class="flex items-center justify-between border-b border-line px-4 py-3">
+          <div>
+            <div class="text-sm font-semibold">{{ statusLabels[col.status] }}</div>
+            <div class="font-mono text-xs text-subtle">{{ col.count }}</div>
+          </div>
+        </header>
+        <div class="flex flex-1 flex-col gap-2 p-3">
+          @if (col.items.length === 0) {
+            <p class="px-1 py-6 text-center text-xs text-subtle">Empty</p>
+          }
+          @for (item of col.items; track item.id) {
+            <article class="rounded-xl border border-line bg-bg p-3 shadow-sm">
+              <a
+                [routerLink]="['/app/applications', item.id]"
+                class="block text-sm font-medium leading-snug hover:text-accent"
+              >
+                {{ item.title }}
+              </a>
+              <div class="mt-1 text-xs text-muted">{{ item.company }}</div>
+              <div class="mt-2 flex flex-wrap gap-1.5">
+                <span class="badge border-line bg-elevated text-subtle">{{ item.priority }}</span>
+                @if (item.remote) {
+                  <span class="badge border-line bg-elevated text-subtle">Remote</span>
+                }
+              </div>
+              <div class="mt-2 font-mono text-[11px] text-subtle">
+                {{ formatMoney(item.salaryMin, item.salaryMax, item.currency) }}
+              </div>
+              <div class="mt-3 flex gap-1">
+                @if (prevStatus(col.status); as prev) {
+                  <button
+                    type="button"
+                    class="btn-ghost flex-1 px-2 py-1.5 text-xs"
+                    [disabled]="moving() === item.id"
+                    (click)="move(item.id, prev)"
+                  >
+                    Back
+                  </button>
+                }
+                @if (nextStatus(col.status); as next) {
+                  <button
+                    type="button"
+                    class="btn-secondary flex-1 px-2 py-1.5 text-xs"
+                    [disabled]="moving() === item.id"
+                    (click)="move(item.id, next)"
+                  >
+                    Advance
+                  </button>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+  </div>
+}

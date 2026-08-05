@@ -1,0 +1,192 @@
+@if (loading()) {
+  <div class="card h-64 animate-pulse bg-elevated/30"></div>
+} @else if (error()) {
+  <div class="card p-6 text-danger">{{ error() }}</div>
+} @else {
+  @if (app(); as a) {
+    <div class="mb-6">
+      <a routerLink="/app/applications" class="text-xs text-muted hover:text-fg"
+        >← Applications</a
+      >
+      <div class="mt-3 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h1 class="page-title">{{ a.title }}</h1>
+          <p class="page-sub">
+            {{ a.company?.name }}
+            @if (a.location || a.remote) {
+              · {{ a.remote ? 'Remote' : a.location }}
+            }
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          @if (a.jobUrl) {
+            <a [href]="a.jobUrl" target="_blank" rel="noopener" class="btn-secondary">Job post</a>
+          }
+          <button type="button" class="btn-danger" (click)="remove()">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid gap-4 lg:grid-cols-3">
+      <div class="space-y-4 lg:col-span-2">
+        <section class="card p-5">
+          <h2 class="mb-3 text-sm font-semibold">Status</h2>
+          <div class="flex flex-wrap gap-2">
+            @for (s of statuses; track s) {
+              <button
+                type="button"
+                class="badge border-line px-3 py-1.5"
+                [class.bg-accent]="a.status === s"
+                [class.text-ink]="a.status === s"
+                [class.bg-elevated]="a.status !== s"
+                [class.text-muted]="a.status !== s"
+                (click)="setStatus(s)"
+              >
+                {{ statusLabels[s] }}
+              </button>
+            }
+          </div>
+        </section>
+
+        <section class="card p-5">
+          <h2 class="mb-3 text-sm font-semibold">Description</h2>
+          <p class="whitespace-pre-wrap text-sm leading-relaxed text-muted">
+            {{ a.description || 'No description yet.' }}
+          </p>
+        </section>
+
+        <section class="card p-5">
+          <h2 class="mb-3 text-sm font-semibold">Notes</h2>
+          <form
+            class="mb-4 flex flex-col gap-2 sm:flex-row"
+            [formGroup]="noteForm"
+            (ngSubmit)="addNote()"
+          >
+            <input
+              type="text"
+              class="field"
+              placeholder="Add a note…"
+              formControlName="body"
+            />
+            <button type="submit" class="btn-primary shrink-0">Add</button>
+          </form>
+          @if (!a.notes?.length) {
+            <p class="text-sm text-muted">No notes yet.</p>
+          } @else {
+            <ul class="space-y-3">
+              @for (n of a.notes; track n.id) {
+                <li class="rounded-xl border border-line bg-bg/50 p-3">
+                  <div class="flex items-start justify-between gap-3">
+                    <p class="text-sm leading-relaxed text-fg">{{ n.body }}</p>
+                    <button
+                      type="button"
+                      class="btn-ghost shrink-0 px-2 py-1 text-xs text-danger"
+                      (click)="deleteNote(n.id)"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                  <div class="mt-2 font-mono text-[11px] text-subtle">
+                    {{ formatDateTime(n.createdAt) }}
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+
+        <section class="card p-5">
+          <h2 class="mb-3 text-sm font-semibold">Interviews</h2>
+          <form
+            class="mb-4 grid gap-2 sm:grid-cols-2"
+            [formGroup]="interviewForm"
+            (ngSubmit)="addInterview()"
+          >
+            <select class="field" formControlName="type">
+              @for (
+                t of ['PHONE', 'VIDEO', 'ONSITE', 'TECHNICAL', 'BEHAVIORAL', 'FINAL', 'OTHER'];
+                track t
+              ) {
+                <option [value]="t">{{ t }}</option>
+              }
+            </select>
+            <input type="datetime-local" class="field" formControlName="scheduledAt" />
+            <input
+              type="text"
+              class="field"
+              placeholder="Location / link"
+              formControlName="location"
+            />
+            <input type="text" class="field" placeholder="Prep notes" formControlName="notes" />
+            <button type="submit" class="btn-secondary sm:col-span-2">Schedule interview</button>
+          </form>
+          @if (!a.interviews?.length) {
+            <p class="text-sm text-muted">No interviews scheduled.</p>
+          } @else {
+            <ul class="space-y-2">
+              @for (i of a.interviews; track i.id) {
+                <li
+                  class="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-line px-3 py-2.5"
+                >
+                  <div>
+                    <div class="text-sm font-medium">{{ i.type }} · {{ i.outcome }}</div>
+                    <div class="font-mono text-xs text-subtle">
+                      {{ formatDateTime(i.scheduledAt) }}
+                      @if (i.location) {
+                        · {{ i.location }}
+                      }
+                    </div>
+                  </div>
+                  <span class="text-xs text-muted">{{ relativeTime(i.scheduledAt) }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <aside class="space-y-4">
+        <div class="card p-5">
+          <h2 class="mb-3 text-sm font-semibold">Details</h2>
+          <dl class="space-y-3 text-sm">
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-subtle">Compensation</dt>
+              <dd class="mt-0.5 font-mono text-fg">
+                {{ formatMoney(a.salaryMin, a.salaryMax, a.currency) }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-subtle">Priority</dt>
+              <dd class="mt-0.5">{{ a.priority }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-subtle">Source</dt>
+              <dd class="mt-0.5 text-muted">{{ a.source || '—' }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-subtle">Applied</dt>
+              <dd class="mt-0.5 font-mono text-xs text-muted">
+                {{ a.appliedAt ? formatDateTime(a.appliedAt) : '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-subtle">Follow-up</dt>
+              <dd class="mt-0.5 font-mono text-xs text-muted">
+                {{ a.followUpAt ? formatDateTime(a.followUpAt) : '—' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs uppercase tracking-wide text-subtle">Company</dt>
+              <dd class="mt-0.5">
+                {{ a.company?.name }}
+                @if (a.company?.industry) {
+                  <span class="text-muted"> · {{ a.company?.industry }}</span>
+                }
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </aside>
+    </div>
+  }
+}

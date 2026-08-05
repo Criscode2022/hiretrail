@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm install
+      - run: npm run build --workspace=apps/web
+      - run: npm run build --workspace=apps/api
+      - name: Smoke API
+        run: |
+          export PORT=8080 HOST=0.0.0.0 JWT_SECRET=ci-secret
+          node apps/api/dist/main.js &
+          pid=$!
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8080/api/health; then
+              break
+            fi
+            sleep 1
+          done
+          curl -sf http://127.0.0.1:8080/api/health | tee /tmp/health.json
+          grep -q '"ok":true' /tmp/health.json
+          kill $pid || true

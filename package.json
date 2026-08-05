@@ -1,0 +1,32 @@
+{
+  "name": "hiretrail",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HireTrail — job application CRM (Angular + NestJS + Neon + Tailwind)",
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/api",
+    "dev:api": "npm run dev --workspace=apps/api",
+    "dev:web": "npm run start --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web && npm run build --workspace=apps/api",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:web": "npm run build --workspace=apps/web",
+    "start": "npm run start:prod --workspace=apps/api",
+    "start:prod": "npm run start:prod --workspace=apps/api",
+    "test": "npm run test --workspace=apps/api",
+    "typecheck": "npm run build --workspace=apps/api && npm run build --workspace=apps/web",
+    "seed": "npm run seed --workspace=apps/api"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "overrides": {
+    "rxjs": "7.8.2"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
+  }
+}

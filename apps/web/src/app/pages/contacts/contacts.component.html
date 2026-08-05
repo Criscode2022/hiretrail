@@ -1,0 +1,83 @@
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Contacts</h1>
+    <p class="page-sub">Recruiters, hiring managers, and referrals.</p>
+  </div>
+  <button type="button" class="btn-primary" (click)="showForm.set(!showForm())">
+    {{ showForm() ? 'Close' : 'Add contact' }}
+  </button>
+</div>
+
+@if (showForm()) {
+  <form class="card mb-6 grid max-w-2xl gap-4 p-5 sm:grid-cols-2" [formGroup]="form" (ngSubmit)="submit()">
+    <div>
+      <label class="label">Name</label>
+      <input class="field" formControlName="name" />
+    </div>
+    <div>
+      <label class="label">Company</label>
+      <select class="field" formControlName="companyId">
+        <option value="">—</option>
+        @for (c of companies(); track c.id) {
+          <option [value]="c.id">{{ c.name }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="label">Email</label>
+      <input class="field" type="email" formControlName="email" />
+    </div>
+    <div>
+      <label class="label">Role</label>
+      <input class="field" formControlName="role" />
+    </div>
+    <div>
+      <label class="label">Phone</label>
+      <input class="field" formControlName="phone" />
+    </div>
+    <div class="sm:col-span-2">
+      <label class="label">Notes</label>
+      <textarea class="field" rows="2" formControlName="notes"></textarea>
+    </div>
+    <div class="sm:col-span-2">
+      <button type="submit" class="btn-primary">Save contact</button>
+    </div>
+  </form>
+}
+
+@if (loading()) {
+  <div class="card h-40 animate-pulse bg-elevated/30"></div>
+} @else if (items().length === 0) {
+  <div class="card p-10 text-center text-sm text-muted">No contacts yet.</div>
+} @else {
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[640px] text-left text-sm">
+        <thead>
+          <tr class="border-b border-line bg-elevated/40 text-xs uppercase tracking-wide text-subtle">
+            <th class="px-4 py-3 font-medium">Name</th>
+            <th class="px-4 py-3 font-medium">Company</th>
+            <th class="px-4 py-3 font-medium">Role</th>
+            <th class="px-4 py-3 font-medium">Email</th>
+            <th class="px-4 py-3 font-medium"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of items(); track c.id) {
+            <tr class="border-b border-line/70 last:border-0">
+              <td class="px-4 py-3 font-medium">{{ c.name }}</td>
+              <td class="px-4 py-3 text-muted">{{ c.company?.name || '—' }}</td>
+              <td class="px-4 py-3 text-muted">{{ c.role || '—' }}</td>
+              <td class="px-4 py-3 text-muted">{{ c.email || '—' }}</td>
+              <td class="px-4 py-3 text-right">
+                <button type="button" class="btn-ghost px-2 py-1 text-xs text-danger" (click)="remove(c.id)">
+                  Delete
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

@@ -1,0 +1,53 @@
+<div class="grid min-h-screen place-items-center px-4 py-10">
+  <div class="w-full max-w-md">
+    <a routerLink="/" class="mb-8 flex items-center gap-2">
+      <span
+        class="flex h-9 w-9 items-center justify-center rounded-xl border border-line bg-surface font-mono text-sm font-semibold"
+        >HT</span
+      >
+      <span class="text-sm font-semibold">HireTrail</span>
+    </a>
+
+    <div class="card p-6 sm:p-8">
+      <h1 class="text-xl font-semibold tracking-tight">Create your workspace</h1>
+      <p class="mt-1 text-sm text-muted">Track applications and interviews from day one.</p>
+
+      <form class="mt-6 space-y-4" [formGroup]="form" (ngSubmit)="submit()">
+        <div>
+          <label class="label" for="name">Full name</label>
+          <input id="name" type="text" class="field" formControlName="name" autocomplete="name" />
+        </div>
+        <div>
+          <label class="label" for="email">Email</label>
+          <input id="email" type="email" class="field" formControlName="email" autocomplete="email" />
+        </div>
+        <div>
+          <label class="label" for="password">Password</label>
+          <input
+            id="password"
+            type="password"
+            class="field"
+            formControlName="password"
+            autocomplete="new-password"
+          />
+          <p class="mt-1 text-xs text-subtle">At least 8 characters.</p>
+        </div>
+
+        @if (error()) {
+          <div class="rounded-xl border border-danger/30 bg-danger/10 px-3 py-2 text-sm text-danger">
+            {{ error() }}
+          </div>
+        }
+
+        <button type="submit" class="btn-primary w-full" [disabled]="loading()">
+          {{ loading() ? 'Creating…' : 'Create account' }}
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-muted">
+        Already have an account?
+        <a routerLink="/login" class="text-fg underline-offset-4 hover:underline">Sign in</a>
+      </p>
+    </div>
+  </div>
+</div>

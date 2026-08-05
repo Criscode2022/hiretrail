@@ -1,0 +1,50 @@
+<div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <h1 class="page-title">Interviews</h1>
+    <p class="page-sub">Calendar of rounds across all applications.</p>
+  </div>
+  <button type="button" class="btn-secondary" (click)="toggleUpcoming()">
+    {{ upcomingOnly() ? 'Show all' : 'Upcoming only' }}
+  </button>
+</div>
+
+@if (loading()) {
+  <div class="card h-40 animate-pulse bg-elevated/30"></div>
+} @else if (items().length === 0) {
+  <div class="card p-10 text-center text-sm text-muted">No interviews found.</div>
+} @else {
+  <div class="space-y-3">
+    @for (i of items(); track i.id) {
+      <article class="card flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="text-sm font-semibold">
+            {{ i.application?.title || 'Interview' }}
+            <span class="font-normal text-muted">· {{ i.type }}</span>
+          </div>
+          <div class="mt-1 text-xs text-muted">
+            {{ i.application?.company?.name || 'Company' }} · {{ i.outcome }}
+            @if (i.location) {
+              · {{ i.location }}
+            }
+          </div>
+          <div class="mt-2 font-mono text-xs text-subtle">
+            {{ formatDateTime(i.scheduledAt) }} · {{ relativeTime(i.scheduledAt) }}
+          </div>
+          @if (i.notes) {
+            <p class="mt-2 text-sm text-muted">{{ i.notes }}</p>
+          }
+        </div>
+        <div class="flex gap-2">
+          @if (i.applicationId) {
+            <a [routerLink]="['/app/applications', i.applicationId]" class="btn-secondary"
+              >Open role</a
+            >
+          }
+          <button type="button" class="btn-ghost text-danger" (click)="remove(i.id)">
+            Delete
+          </button>
+        </div>
+      </article>
+    }
+  </div>
+}
